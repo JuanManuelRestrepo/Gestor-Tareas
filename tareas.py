@@ -1,12 +1,14 @@
 from abc import ABC, abstractclassmethod
+from Menu import *
+
 class TareaBase(ABC):
 
     #Metodo constructopr, con sus atributos
-    def __init__(self, titulo, descripcion,Responsable, fecha_limite):
+    def __init__(self, titulo, descripcion,Responsable_correo, fecha_limite):
         self.titulo = titulo
         self.descripcion = descripcion
         self.fecha_limite = fecha_limite
-        self.responsable=Responsable
+        self.responsable=Responsable_correo
         self.estado = "Pendiente"
 
     @abstractclassmethod

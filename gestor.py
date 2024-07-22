@@ -1,7 +1,9 @@
 from abc import ABC, abstractclassmethod
 from Usuarios import*
 from tareas import*
+from Correo import *
 
+correo=Correo_gmail('ayalajuanma1213@gmail.com', 'pqdz diwr wwtq crcs')
 class Gestor_usuarios_Base(ABC):
 
     @abstractclassmethod
@@ -34,11 +36,13 @@ class Gestor_usuarios_Base(ABC):
         pass
     
 class Gestor_app(Gestor_usuarios_Base):
+
     def __init__(self):
         #definimos dos listas donde se almacenaran los usuarios y las tareas
         self.usuarios = []
         self.tareas = []
         self.tarea_usuario=[]
+        self.correo=correo
     
     def Agregarusuario(self, usuario):
         #comprobamos que el objeto(primer elemento) sea una instancia de la clase Usuario(segundo elemento)
@@ -53,6 +57,7 @@ class Gestor_app(Gestor_usuarios_Base):
         if not isinstance(tarea, Tarea):
             raise ValueError(" EL objeto no es una instacia de la clase Tarea")
         self.tareas.append(tarea)
+        self.notificar_usuario(tarea)
 
     def Eliminar_usuario(self,identificacion):
         usuario_eliminar=None
@@ -66,33 +71,42 @@ class Gestor_app(Gestor_usuarios_Base):
             print(f"Usuario {usuario_eliminar.nombre} eliminado.")
         else:
             raise ValueError("El usuario no existe")
+    
     def Eliminar_tarea(self,tarea):
         if tarea not  in self.usuarios:
             raise ValueError("El usuario no existe")
         self.tareas.remove(tarea)
         print(f"usuario {tarea.titulo} eliminado")
 
-    def Actualizar_tarea(self, tarea): 
-        if tarea not in self.tareas:
-            raise ValueError("La tarea no existe")
-        nuevo_titulo = input("Ingrese el nuevo título de la tarea: ")
-        nueva_descripcion = input("Ingrese la nueva descripción de la tarea: ")
-        nueva_fecha_limite = input("Ingrese la nueva fecha límite (formato YYYY-MM-DD): ")
-        nuevo_estado = input("Ingrese el nuevo estado de la tarea: ")
-        tarea.titulo = nuevo_titulo
-        tarea.descripcion = nueva_descripcion
-        tarea.fecha_limite = nueva_fecha_limite
-        tarea.estado = nuevo_estado
-        print("Tarea Actualizada")
+    def Actualizar_tarea(self, tarea_titulo): 
+        tarea_actualizar=None
+        for tarea in self.tareas:
+            if tarea.titulo ==tarea_titulo:
+                tarea_actualizar=tarea
+                break
+
+        if tarea_actualizar:
+            nuevo_titulo = input("Ingrese el nuevo título de la tarea: ")
+            nueva_descripcion = input("Ingrese la nueva descripción de la tarea: ")
+            nueva_fecha_limite = input("Ingrese la nueva fecha límite (formato YYYY-MM-DD): ")
+            nuevo_estado = input("Ingrese el nuevo estado de la tarea: ")
+            tarea.titulo = nuevo_titulo
+            tarea.descripcion = nueva_descripcion
+            tarea.fecha_limite = nueva_fecha_limite
+            tarea.estado = nuevo_estado
+            print("Tarea Actualizada")
+
+        else:
+            raise ValueError(f"la tarea {tarea_titulo} no existe" )
 
     def Actualizar_usuario(self, identificacion): 
 
-        usuario_eliminar=None
+        usuario_actualizar=None
         for usuario in self.usuarios:
             if usuario.identificacion ==identificacion:
-                usuario_eliminar=usuario
+                usuario_actualizar=usuario
                 break
-        if usuario_eliminar:
+        if usuario_actualizar:
             nuevo_nombre = input("Ingrese el nuevo nombre: ")
             nueva_correo = input("Ingrese el nuevo correo: ")
             usuario.nombre=nuevo_nombre
@@ -100,7 +114,7 @@ class Gestor_app(Gestor_usuarios_Base):
             print("Usuario Actualizado")
     
         else:
-            raise ValueError("La tarea no existe")
+            raise ValueError("El usuario no existe")
    
     def listar_usuarios(self):
         print("Listando todos los usuarios Creados")
@@ -125,6 +139,6 @@ class Gestor_app(Gestor_usuarios_Base):
             for tarea in self.tarea_usuario:
                 print(tarea)
 
-
-
+    def notificar_usuario(self, tarea):
+        correo.enviar_correo(tarea.responsable.correo_electronico, tarea.titulo, f"{tarea.descripcion}\n con una fecha de vencimiento {tarea.fecha_limite} Estado de la tarea: {tarea.estado}")
 
