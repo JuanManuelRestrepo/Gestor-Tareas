@@ -2,16 +2,22 @@ from abc import ABC, abstractclassmethod
 from Usuarios import*
 from tareas import*
 from Correo import *
+from Notificaciones import *
 
-correo=Correo_gmail('ayalajuanma1213@gmail.com', 'pqdz diwr wwtq crcs')
+notificacion=Notificacion()
 class Gestor_usuarios_Base(ABC):
 
     @abstractclassmethod
     def Agregarusuario(self,Usuario):
         pass
-    
+    @abstractclassmethod
+    def Validar_usuario(self):
+        pass
     @abstractclassmethod
     def Agregar_Tarea(self,Tarea):
+        pass
+    @abstractclassmethod
+    def Validar_tarea(self):
         pass
     @abstractclassmethod
     def Eliminar_usuario(self, usuario):
@@ -34,7 +40,9 @@ class Gestor_usuarios_Base(ABC):
     @abstractclassmethod
     def Tarea_usuario(self):
         pass
-    
+    @abstractclassmethod
+    def Terminar_tarea(self):
+        pass
 class Gestor_app(Gestor_usuarios_Base):
 
     def __init__(self):
@@ -42,22 +50,41 @@ class Gestor_app(Gestor_usuarios_Base):
         self.usuarios = []
         self.tareas = []
         self.tarea_usuario=[]
-        self.correo=correo
-    
+        self.notificacidor=notificacion
+        
     def Agregarusuario(self, usuario):
         #comprobamos que el objeto(primer elemento) sea una instancia de la clase Usuario(segundo elemento)
         if not isinstance(usuario,Usuario):
             #raise se utiliza para lanzar excepciones
-            raise  ValueError(" EL objeto no es una instacia de la clase Usuario")
-        self.usuarios.append(usuario)
-        print(f"Usuario {usuario.nombre} agregado.")
+            raise ValueError(" EL objeto no es una instacia de la clase Usuario")
+        usuario_existente=self.Validar_usuario(usuario.identificacion,usuario.correo_electronico)
+        if not usuario_existente:
+            self.usuarios.append(usuario)
+            print(f"Usuario {usuario.nombre} agregado.")
+        else:
+             print("Usuario existente")
     
+    def Validar_usuario(self, identificacion, correo_electronico):
+            for usuario in self.usuarios:
+                if usuario.identificacion == identificacion or usuario.correo_electronico == correo_electronico:
+                    return True
+            return False
     def Agregar_Tarea(self, tarea):
         #misma comprobancion anterior
         if not isinstance(tarea, Tarea):
             raise ValueError(" EL objeto no es una instacia de la clase Tarea")
-        self.tareas.append(tarea)
-        self.notificar_usuario(tarea)
+        tarea_existente=self.Validar_tarea(tarea.titulo)
+        if tarea_existente==False:
+            self.tareas.append(tarea)
+            notificacion.notificar_Nueva_Tarea(tarea)
+
+    def Validar_tarea(self, titulo):
+        tarea_existente=False
+        for tarea in self.tareas:
+            if tarea.titulo == titulo:
+                print("Tarea ya existente")
+                tarea_existente=True
+        return tarea_existente
 
     def Eliminar_usuario(self,identificacion):
         usuario_eliminar=None
@@ -95,6 +122,7 @@ class Gestor_app(Gestor_usuarios_Base):
             tarea.fecha_limite = nueva_fecha_limite
             tarea.estado = nuevo_estado
             print("Tarea Actualizada")
+            self.notificacidor.notificar_Tarea_Cambios(tarea_actualizar)
 
         else:
             raise ValueError(f"la tarea {tarea_titulo} no existe" )
@@ -139,6 +167,16 @@ class Gestor_app(Gestor_usuarios_Base):
             for tarea in self.tarea_usuario:
                 print(tarea)
 
-    def notificar_usuario(self, tarea):
-        correo.enviar_correo(tarea.responsable.correo_electronico, tarea.titulo, f"{tarea.descripcion}\n con una fecha de vencimiento {tarea.fecha_limite} Estado de la tarea: {tarea.estado}")
+    def Terminar_tarea(self):
+        tarea_terminar = input("Ingrese el titulo de la tarea a terminar: ")
+        tarea_notificar=None
+        for tarea in self.tareas:
+            if tarea.titulo == tarea_terminar:
+                tarea.estado = "Terminada"
+                print(f"Tarea {tarea.titulo} terminada")
+                tarea_notificar=tarea
+                self.notificacidor.notificar_Tarea_Terminada(tarea_notificar)
+
+
+
 

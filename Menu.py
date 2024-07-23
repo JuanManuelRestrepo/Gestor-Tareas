@@ -22,7 +22,6 @@ def main():
                         usuario=nombre
                         usuario=Usuario(nombre, identificacion,correo)
                         Gestor_app1.Agregarusuario(usuario)
-                        print("Usuario creado exitosamente")
                     elif subopcion ==2:
                         usuario_eliminar=input("Digite la identificacion del usuario a eliminar")
                         Gestor_app1.Eliminar_usuario(usuario_eliminar)
@@ -38,7 +37,7 @@ def main():
                     print("Opcion no valida")
 
             elif opcion == 2:
-                subopcion = input("1.Agregar Tarea\n2.Eliminar Tarea\n3.Actualizar Tarea\n4.Listar Tareas\nDigite una opción: ")
+                subopcion = input("1.Agregar Tarea\n2.Eliminar Tarea\n3.Actualizar Tarea\n4.Listar Tareas\n5.Terminar Tarea\nDigite una opción: ")
                 if subopcion.isdigit():
                     subopcion = int(subopcion)
                     if subopcion == 1:
@@ -46,7 +45,7 @@ def main():
                         titulo = input("Digite el título de la tarea: ")
                         descripcion = input("Digite la descripción de la tarea: ")
                         fecha_limite = input("Digite la fecha límite de la tarea (formato YYYY-MM-DD): ")
-                        responsable_correo = input("Digite el nombre del usuario responsable: ")
+                        responsable_correo = input("Digite el correo del usuario responsable: ")
 
                         # Buscar el usuario responsable en la lista de usuarios
                         responsable = None
@@ -55,7 +54,7 @@ def main():
                                 responsable = usuario
                                 break
 
-                        if responsable:
+                        if responsable!= None:
                             tarea = Tarea(titulo, descripcion, responsable, fecha_limite)
                             Gestor_app1.Agregar_Tarea(tarea)
                             print("Tarea agregada exitosamente")
@@ -85,7 +84,8 @@ def main():
                     elif subopcion == 4:
                         # Listar Tareas
                         Gestor_app1.listar_tareas()  # Asegúrate de tener un método listar_tareas en la clase Gestor_app
-
+                    elif subopcion==5:
+                        Gestor_app1.Terminar_tarea (titulo_tarea)
                     else:
                         print("Opción no válida")
                 else:
