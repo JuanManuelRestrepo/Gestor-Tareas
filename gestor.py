@@ -117,6 +117,12 @@ class Gestor_app(Gestor_usuarios_Base):
             nueva_descripcion = input("Ingrese la nueva descripción de la tarea: ")
             nueva_fecha_limite = input("Ingrese la nueva fecha límite (formato YYYY-MM-DD): ")
             nuevo_estado = input("Ingrese el nuevo estado de la tarea: ")
+            # Convertir la nueva fecha límite a datetime
+            try:
+                nueva_fecha_limite = datetime.strptime(nueva_fecha_limite, "%Y-%m-%d")
+            except ValueError:
+                print("Formato de fecha incorrecto. Utilice YYYY-MM-DD.")
+                return
             tarea.titulo = nuevo_titulo
             tarea.descripcion = nueva_descripcion
             tarea.fecha_limite = nueva_fecha_limite
