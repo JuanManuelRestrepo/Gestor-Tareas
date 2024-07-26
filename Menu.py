@@ -23,7 +23,7 @@ def main():
                         usuario=Usuario(nombre, identificacion,correo)
                         Gestor_app1.Agregarusuario(usuario)
                     elif subopcion ==2:
-                        usuario_eliminar=input("Digite la identificacion del usuario a eliminar")
+                        usuario_eliminar=input("Digite el correo del usuario a eliminar")
                         Gestor_app1.Eliminar_usuario(usuario_eliminar)
 
                     elif subopcion==3:
@@ -41,40 +41,18 @@ def main():
                 if subopcion.isdigit():
                     subopcion = int(subopcion)
                     if subopcion == 1:
-                        # Agregar Tarea
-                        titulo = input("Digite el título de la tarea: ")
-                        descripcion = input("Digite la descripción de la tarea: ")
-                        fecha_limite = input("Digite la fecha límite de la tarea (formato YYYY-MM-DD): ")
-                        responsable_correo = input("Digite el correo del usuario responsable: ")
-
-                        # Buscar el usuario responsable en la lista de usuarios
-                        responsable = None
-                        for usuario in Gestor_app1.usuarios:
-                            if usuario.correo_electronico == responsable_correo:
-                                responsable = usuario
-                                break
-
-                        if responsable!= None:
-                            tarea = Tarea(titulo, descripcion, responsable, fecha_limite)
+                            # Agregar Tarea
+                            titulo = input("Digite el título de la tarea: ")
+                            descripcion = input("Digite la descripción de la tarea: ")
+                            fecha_limite = input("Digite la fecha límite de la tarea (formato YYYY-MM-DD): ")
+                            responsable_correo = input("Digite el correo del usuario responsable: ")
+                            tarea = Tarea(titulo, descripcion, fecha_limite, responsable_correo)
                             Gestor_app1.Agregar_Tarea(tarea)
-                            print("Tarea agregada exitosamente")
-                        else:
-                            print("Usuario responsable no encontrado")
-
+                        
                     elif subopcion == 2:
                         # Eliminar Tarea
                         titulo_tarea = input("Digite el título de la tarea a eliminar: ")
-                        tarea_a_eliminar = None
-                        for tarea in Gestor_app1.tareas:
-                            if tarea.titulo == titulo_tarea:
-                                tarea_a_eliminar = tarea
-                                break
-
-                        if tarea_a_eliminar:
-                            Gestor_app1.Eliminar_tarea(tarea_a_eliminar)
-                            print("Tarea eliminada exitosamente")
-                        else:
-                            print("Tarea no encontrada")
+                        Gestor_app1.Eliminar_tarea(titulo_tarea)
 
                     elif subopcion == 3:
                         # Actualizar Tarea
@@ -86,6 +64,13 @@ def main():
                         Gestor_app1.listar_tareas()  # Asegúrate de tener un método listar_tareas en la clase Gestor_app
                     elif subopcion==5:
                         Gestor_app1.Terminar_tarea (titulo_tarea)
+
+                    elif subopcion ==6:
+                        correo_responsable=input("Digite el correo del usuario")
+                        Gestor_app1.Tarea_usuario(correo_responsable)
+                        
+
+
                     else:
                         print("Opción no válida")
                 else:

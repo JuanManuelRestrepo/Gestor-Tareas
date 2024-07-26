@@ -3,6 +3,8 @@ from Usuarios import*
 from tareas import*
 from Correo import *
 from Notificaciones import *
+from BasesdeDatos import DatabaseManager as DB
+
 
 notificacion=Notificacion()
 class Gestor_usuarios_Base(ABC):
@@ -10,15 +12,11 @@ class Gestor_usuarios_Base(ABC):
     @abstractclassmethod
     def Agregarusuario(self,Usuario):
         pass
-    @abstractclassmethod
-    def Validar_usuario(self):
-        pass
+
     @abstractclassmethod
     def Agregar_Tarea(self,Tarea):
         pass
-    @abstractclassmethod
-    def Validar_tarea(self):
-        pass
+  
     @abstractclassmethod
     def Eliminar_usuario(self, usuario):
         pass
@@ -40,139 +38,96 @@ class Gestor_usuarios_Base(ABC):
     @abstractclassmethod
     def Tarea_usuario(self):
         pass
+    """
     @abstractclassmethod
     def Terminar_tarea(self):
-        pass
+        pass"""
+
 class Gestor_app(Gestor_usuarios_Base):
 
     def __init__(self):
-        #definimos dos listas donde se almacenaran los usuarios y las tareas
-        self.usuarios = []
-        self.tareas = []
-        self.tarea_usuario=[]
         self.notificacidor=notificacion
+        self.DB=DB()
         
     def Agregarusuario(self, usuario):
         #comprobamos que el objeto(primer elemento) sea una instancia de la clase Usuario(segundo elemento)
         if not isinstance(usuario,Usuario):
             #raise se utiliza para lanzar excepciones
             raise ValueError(" EL objeto no es una instacia de la clase Usuario")
-        usuario_existente=self.Validar_usuario(usuario.identificacion,usuario.correo_electronico)
+        usuario_existente=self.DB.validar_usuario(usuario.identificacion)
         if not usuario_existente:
-            self.usuarios.append(usuario)
+            self.DB.agregar_usuario(usuario.nombre, usuario.identificacion, usuario.correo_electronico)
             print(f"Usuario {usuario.nombre} agregado.")
         else:
              print("Usuario existente")
-    
-    def Validar_usuario(self, identificacion, correo_electronico):
-            for usuario in self.usuarios:
-                if usuario.identificacion == identificacion or usuario.correo_electronico == correo_electronico:
-                    return True
-            return False
+
+    def listar_usuarios(self):
+        self.DB.listar_usuarios()
+
+    def Actualizar_usuario(self, identificacion): 
+        usuario=self.DB.validar_usuario(identificacion)
+        if usuario:
+            nuevo_nombre=input("Digite el nuevo nombre")
+            nuevo_correo=input("Digite el nuevo correo")
+            self.DB.Actualizar_usuario(identificacion,nuevo_nombre, nuevo_correo)
+        else:
+            print("Usuario no encontrado")
+
     def Agregar_Tarea(self, tarea):
         #misma comprobancion anterior
         if not isinstance(tarea, Tarea):
             raise ValueError(" EL objeto no es una instacia de la clase Tarea")
-        tarea_existente=self.Validar_tarea(tarea.titulo)
-        if tarea_existente==False:
-            self.tareas.append(tarea)
-            notificacion.notificar_Nueva_Tarea(tarea)
-
-    def Validar_tarea(self, titulo):
-        tarea_existente=False
-        for tarea in self.tareas:
-            if tarea.titulo == titulo:
-                print("Tarea ya existente")
-                tarea_existente=True
-        return tarea_existente
-
-    def Eliminar_usuario(self,identificacion):
-        usuario_eliminar=None
-        for usuario in self.usuarios:
-            if usuario.identificacion ==identificacion:
-                usuario_eliminar=usuario
-                break
-
-        if usuario_eliminar:
-            self.usuarios.remove(usuario_eliminar)
-            print(f"Usuario {usuario_eliminar.nombre} eliminado.")
+        tarea_existente=self.DB.validar_tarea(tarea.titulo)
+        if not tarea_existente:
+            self.DB.agregar_tarea(tarea.titulo, tarea.descripcion, tarea.fecha_limite,tarea.estado,tarea.responsable_correo)
+            self.notificacidor.notificar_Nueva_Tarea(tarea)
         else:
-            raise ValueError("El usuario no existe")
-    
-    def Eliminar_tarea(self,tarea):
-        if tarea not  in self.usuarios:
-            raise ValueError("El usuario no existe")
-        self.tareas.remove(tarea)
-        print(f"usuario {tarea.titulo} eliminado")
-
-    def Actualizar_tarea(self, tarea_titulo): 
-        tarea_actualizar=None
-        for tarea in self.tareas:
-            if tarea.titulo ==tarea_titulo:
-                tarea_actualizar=tarea
-                break
-
-        if tarea_actualizar:
-            nuevo_titulo = input("Ingrese el nuevo título de la tarea: ")
-            nueva_descripcion = input("Ingrese la nueva descripción de la tarea: ")
-            nueva_fecha_limite = input("Ingrese la nueva fecha límite (formato YYYY-MM-DD): ")
-            nuevo_estado = input("Ingrese el nuevo estado de la tarea: ")
-            # Convertir la nueva fecha límite a datetime
-            try:
-                nueva_fecha_limite = datetime.strptime(nueva_fecha_limite, "%Y-%m-%d")
-            except ValueError:
-                print("Formato de fecha incorrecto. Utilice YYYY-MM-DD.")
-                return
-            tarea.titulo = nuevo_titulo
-            tarea.descripcion = nueva_descripcion
-            tarea.fecha_limite = nueva_fecha_limite
-            tarea.estado = nuevo_estado
-            print("Tarea Actualizada")
-            self.notificacidor.notificar_Tarea_Cambios(tarea_actualizar)
-
-        else:
-            raise ValueError(f"la tarea {tarea_titulo} no existe" )
-
-    def Actualizar_usuario(self, identificacion): 
-
-        usuario_actualizar=None
-        for usuario in self.usuarios:
-            if usuario.identificacion ==identificacion:
-                usuario_actualizar=usuario
-                break
-        if usuario_actualizar:
-            nuevo_nombre = input("Ingrese el nuevo nombre: ")
-            nueva_correo = input("Ingrese el nuevo correo: ")
-            usuario.nombre=nuevo_nombre
-            usuario.correo_electronico=nueva_correo
-            print("Usuario Actualizado")
-    
-        else:
-            raise ValueError("El usuario no existe")
-   
-    def listar_usuarios(self):
-        print("Listando todos los usuarios Creados")
-        for usuario in self.usuarios:
-            print(f"Nombre: {usuario.nombre} \t correo: {usuario.correo_electronico}")
+            print(f"Tarea : {tarea.titulo} existente")
 
     def listar_tareas(self):
-        print("Listando todos los usuarios Creados")
-        for tarea in self.tareas:
-            print(f"Titulo: {tarea.titulo} \t Responsable: {tarea.responsable.nombre}")  
+        self.DB.listar_tareas()
 
-    def Tarea_usuario(self, usuario):
-        if not isinstance(usuario, Usuario):
-            raise ValueError("El objeto no es una instacia de la clase Usuario")
-        for tarea in self.tareas:
-            if tarea.responsable == usuario:
-                self.tarea_usuario.append(tarea)
-        if not self.tarea_usuario:
-            print(f"No hay tareas asignadas a {usuario.nombre}.")
+    def Eliminar_usuario(self,correo):
+        usuario=self.DB.Validar_correo_existente(correo)
+        if usuario:
+            self.DB.eliminar_usuario(correo)
+            print(f"Usuario {correo} eliminado")
         else:
-            print(f"Tareas asignadas a {usuario.nombre}:")
-            for tarea in self.tarea_usuario:
-                print(tarea)
+            print("Usuario no encontrado")
+    
+    def Eliminar_tarea(self,titulo):
+        validacion=self.DB.validar_tarea(titulo)
+        if validacion:
+            self.DB.eliminar_tarea(titulo)
+            print(f"Tarea {titulo} eliminada")
+        else:
+            print("Tarea no encontrada")
+            
 
+    def Actualizar_tarea(self, tarea_titulo): 
+        tarea=self.DB.validar_tarea(tarea_titulo)
+        if tarea:
+            nuevo_titulo=input("Digite el nuevo nombre")
+            nueva_descripcion=input("Digite el nuevo correo")
+            nueva_fecha_limite = datetime.strptime(nueva_fecha_limite, "%Y-%m-%d")
+            responsable_correo=input("Digite el correo del responsable")
+            self.DB.Actualizar_usuario(tarea_titulo, nuevo_titulo, nueva_descripcion, nueva_fecha_limite, responsable_correo)
+            self.notificacidor.correo(responsable_correo)
+            print("Tarea no encontrada")
+
+    def listar_tareas(self):
+       self.DB.listar_tareas()
+
+    def Tarea_usuario(self, correo_responsable):
+        validacion_correo=self.DB.Validar_correo_existente()
+
+        if validacion_correo:
+            self.DB.Tarea_Usuario(correo_responsable)
+        else:
+            print("El correo no existe")
+
+        
+"""
     def Terminar_tarea(self):
         tarea_terminar = input("Ingrese el titulo de la tarea a terminar: ")
         tarea_notificar=None
@@ -182,7 +137,6 @@ class Gestor_app(Gestor_usuarios_Base):
                 print(f"Tarea {tarea.titulo} terminada")
                 tarea_notificar=tarea
                 self.notificacidor.notificar_Tarea_Terminada(tarea_notificar)
-
-
+"""
 
 

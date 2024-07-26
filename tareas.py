@@ -4,10 +4,14 @@ from datetime import datetime
 class Tarea():
 
     #Metodo constructopr, con sus atributos
-    def __init__(self, titulo, descripcion,Responsable_correo, fecha_limite):
+    def __init__(self, titulo, descripcion, fecha_limite, responsable_correo):
+        try:
+            self.fecha_limite = datetime.strptime(fecha_limite, "%Y-%m-%d")
+        except ValueError as e:
+            print(f"Error al convertir la fecha: {e}")
+            # Maneja el error o asigna un valor por defecto
+            self.fecha_limite = None
         self.titulo = titulo
         self.descripcion = descripcion
-        self.fecha_limite = datetime.strptime(fecha_limite, "%Y-%m-%d")  # Convertir string a datetime
-        self.responsable=Responsable_correo
-        self.estado = "Pendiente"
-
+        self.responsable_correo = responsable_correo
+        self.estado="Pendiente"
