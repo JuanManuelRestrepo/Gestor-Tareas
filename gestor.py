@@ -59,17 +59,17 @@ class Gestor_app(Gestor_usuarios_Base):
             self.DB.agregar_usuario(usuario.nombre, usuario.identificacion, usuario.correo_electronico)
             print(f"Usuario {usuario.nombre} agregado.")
         else:
-             print("Usuario existente")
+            print("Usuario existente")
 
     def listar_usuarios(self):
         self.DB.listar_usuarios()
 
-    def Actualizar_usuario(self, identificacion): 
-        usuario=self.DB.validar_usuario(identificacion)
-        if usuario:
+    def Actualizar_usuario(self, correo): 
+        id_resp=self.DB.Obtener_id_responsable(correo)
+        if id_resp:
             nuevo_nombre=input("Digite el nuevo nombre")
             nuevo_correo=input("Digite el nuevo correo")
-            self.DB.Actualizar_usuario(identificacion,nuevo_nombre, nuevo_correo)
+            self.DB.Actualizar_usuario(id_resp,nuevo_nombre, nuevo_correo)
         else:
             print("Usuario no encontrado")
 
@@ -96,24 +96,22 @@ class Gestor_app(Gestor_usuarios_Base):
             print("Usuario no encontrado")
     
     def Eliminar_tarea(self,titulo):
-        validacion=self.DB.validar_tarea(titulo)
-        if validacion:
             self.DB.eliminar_tarea(titulo)
-            print(f"Tarea {titulo} eliminada")
-        else:
-            print("Tarea no encontrada")
             
 
     def Actualizar_tarea(self, tarea_titulo): 
-        tarea=self.DB.validar_tarea(tarea_titulo)
-        if tarea:
-            nuevo_titulo=input("Digite el nuevo nombre")
-            nueva_descripcion=input("Digite el nuevo correo")
-            nueva_fecha_limite = datetime.strptime(nueva_fecha_limite, "%Y-%m-%d")
-            responsable_correo=input("Digite el correo del responsable")
-            self.DB.Actualizar_usuario(tarea_titulo, nuevo_titulo, nueva_descripcion, nueva_fecha_limite, responsable_correo)
-            self.notificacidor.correo(responsable_correo)
-            print("Tarea no encontrada")
+        nuevo_titulo=input("Digite el nuevo nombre")
+        nueva_descripcion=input("Digite la descripcion")
+        while True:
+            nueva_fecha_limite_str = input("Digite la nueva fecha límite (YYYY-MM-DD): ")
+            try:
+                nueva_fecha_limite = datetime.strptime(nueva_fecha_limite_str, "%Y-%m-%d")
+                break
+            except ValueError:
+                print("Formato de fecha no válido. Inténtelo de nuevo.")
+        responsable_correo=input("Digite el correo del responsable")
+        self.DB.Actualizar_tarea(tarea_titulo, nuevo_titulo,nueva_descripcion,nueva_fecha_limite,responsable_correo)
+        self.notificacidor.notificar_Tarea_Cambios(nuevo_titulo)
 
     def listar_tareas(self):
        self.DB.listar_tareas()
@@ -126,17 +124,9 @@ class Gestor_app(Gestor_usuarios_Base):
         else:
             print("El correo no existe")
 
+    
+    def Terminar_tarea(self, titulo):
+        self.DB.Terminar_tarea(titulo)
         
-"""
-    def Terminar_tarea(self):
-        tarea_terminar = input("Ingrese el titulo de la tarea a terminar: ")
-        tarea_notificar=None
-        for tarea in self.tareas:
-            if tarea.titulo == tarea_terminar:
-                tarea.estado = "Terminada"
-                print(f"Tarea {tarea.titulo} terminada")
-                tarea_notificar=tarea
-                self.notificacidor.notificar_Tarea_Terminada(tarea_notificar)
-"""
 
 

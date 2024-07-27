@@ -2,11 +2,13 @@ from Correo import *
 from abc import ABC, abstractclassmethod
 from gestor import *
 from tareas import *
+from BasesdeDatos import *
 
 correo=Correo_gmail('ayalajuanma1213@gmail.com', 'pqdz diwr wwtq crcs')
 class Notificacion_Base(ABC):
     def __init__(self):
         self.correo=correo
+        self.DB=DatabaseManager()
     @abstractclassmethod
     def notificar_Nueva_Tarea(self):
         pass
@@ -29,9 +31,13 @@ class Notificacion(Notificacion_Base):
         self.correo.enviar_correo(tarea.responsable_correo, f"Tarea Terminada: {tarea.titulo}", cuerpo)
         print("Notificación de tarea terminada enviada.")
     
-    def notificar_Tarea_Cambios(self, tarea):
-        cuerpo = f"La tarea ha sido actualizada:\nTítulo: {tarea.titulo}\nDescripción: {tarea.descripcion}\nFecha límite: {tarea.fecha_limite}\nEstado: {tarea.estado}"
-        self.correo.enviar_correo(tarea.responsable_correo, f"Cambios en la Tarea: {tarea.titulo}", cuerpo)
-        print("Notificación de cambios en la tarea enviada.")
-
-
+    def notificar_Tarea_Cambios(self, titulo_notificar):
+        resultado = self.DB.notificacion_cambio_tarea(titulo_notificar)
+        
+        if resultado:
+            titulo, descripcion, fecha_limite, estado, correo = resultado
+            # Realiza operaciones con los valores desempaquetados
+            cuerpo=f"Tarea actualizada:\nTítulo: {titulo}\nDescripción: {descripcion}\nFecha límite: {fecha_limite}\nEstado: {estado}"
+            self.correo.enviar_correo(correo, f"Tarea Actualizada: {titulo}", cuerpo)
+        else:
+            print("No se encontró la tarea para notificar o hubo un error en la consulta.")

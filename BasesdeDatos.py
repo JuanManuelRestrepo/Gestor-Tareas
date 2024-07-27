@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime
-
 class DatabaseManager:
     def __init__(self, db_name='gestor.db'):
         # Conecta a la base de datos especificada por `db_name`.
@@ -80,14 +79,30 @@ class DatabaseManager:
             return False
         
     def eliminar_usuario(self, correo):
-        id_resp=self.Obtener_id_responsable(correo)
+        id_resp = self.Obtener_id_responsable(correo)
+            
+        if id_resp is None:
+            print(f"No se encontró el usuario con correo {correo}.")
+            return
+        
         try:
-            # Eliminar la tarea con el título especificado
-            self.cursor_DB.execute('''DELETE FROM USERS WHERE id=?''',(id_resp,))
+            # Primero, actualizar las tareas asignadas al usuario para establecer responsable_id en NULL
+            self.cursor_DB.execute('''UPDATE tareas SET responsable_id=NULL WHERE responsable_id=?''', (id_resp,))
+
+            
+            # Luego, eliminar al usuario
+            self.cursor_DB.execute('''DELETE FROM USERS WHERE id=?''', (id_resp,))
+            
+            # Confirmar los cambios en la base de datos
             self.connection.commit()
-            print("usuario eliminado correctamente.")
+            
+            print(f"Usuario con correo {correo} eliminado y tareas actualizadas.")
+            
+        
+        except sqlite3.OperationalError as e:
+            print(f"Error operativo al eliminar el usuario: {e}. La base de datos puede estar bloqueada.")
         except sqlite3.DatabaseError as e:
-            print(f"Error al eliminar el usuario: {e}")
+            print(f"Error al eliminar el usuario: {e}.")
 
     def listar_usuarios(self):
         # Ejecuta una consulta SQL para seleccionar el nombre y el correo electrónico de todos los usuarios.
@@ -99,14 +114,14 @@ class DatabaseManager:
         # Itera sobre cada usuario en la lista de resultados.
         for usuario in usuarios:
             # Imprime el nombre y el correo electrónico de cada usuario.
-            print(f"Nombre: {usuario[0]}, Correo: {usuario[1]}")
+            print(f"Nombre: {usuario[0]} || Correo: {usuario[1]}")
     
-    def Actualizar_usuario(self, identificacion, nuevo_nombre, nuevo_correo):
+    def Actualizar_usuario(self, id_resp, nuevo_nombre, nuevo_correo):
         try:
             # Ejecutar la consulta SQL para actualizar la información del usuario en la base de datos
             # La consulta actualiza el nombre y el correo electrónico del usuario basado en la identificación proporcionada
-            self.cursor_DB.execute('''UPDATE USERS SET nombre=?, correo_electronico=? WHERE identificacion=?''', 
-                                (nuevo_nombre, nuevo_correo, identificacion))
+            self.cursor_DB.execute('''UPDATE USERS SET nombre=?, correo_electronico=? WHERE id=?''', 
+                                (nuevo_nombre, nuevo_correo, id_resp))
             
             # Confirmar los cambios en la base de datos
             # Los cambios realizados por la consulta SQL se guardan permanentemente en la base de datos
@@ -153,7 +168,7 @@ class DatabaseManager:
 
     def validar_tarea(self, titulo):
         # Ejecuta una consulta para verificar si existe una tarea con el título proporcionado
-        self.cursor_DB.execute('''SELECT 1 FROM tareas WHERE titulo=?''', (titulo,))
+        self.cursor_DB.execute('''SELECT 1 FROM tareas WHERE titulo=?''',(titulo,))
         
         # Recupera una única fila del resultado de la consulta
         # Si la consulta devuelve una fila, significa que existe una tarea con el título
@@ -182,52 +197,56 @@ class DatabaseManager:
                 print(f"Tarea con fecha inválida: {tarea}")
 
     def Actualizar_tarea(self, titulo, nuevo_titulo=None, nueva_descripcion=None, nueva_fecha=None, correo_responsable=None):
-        try:
-            # Verificar y obtener el ID del responsable si se proporciona un correo
-            if correo_responsable:
-                id_responsable = self.Obtener_id_responsable(correo_responsable)
-                if not id_responsable:
-                    print("Responsable con correo electrónico no encontrado.")
-                    return
+        tarea_validar=self.validar_tarea(titulo)
+        if tarea_validar:
+            try:
+                # Verificar y obtener el ID del responsable si se proporciona un correo
+                if correo_responsable:
+                    id_responsable = self.Obtener_id_responsable(correo_responsable)
+                    if not id_responsable:
+                        print("Responsable con correo electrónico no encontrado.")
+                        return
+                    else:
+                        pass #abierta a implementacion
+                # Construir la consulta SQL y valores basados en los campos proporcionados
+                if nuevo_titulo and nueva_descripcion and nueva_fecha and id_responsable:
+                    consulta = '''UPDATE tareas 
+                                SET titulo=?, descripcion=?, fecha_limite=?, responsable_id=? 
+                                WHERE titulo=?'''
+                    valores = (nuevo_titulo, nueva_descripcion, nueva_fecha, id_responsable, titulo)
+                elif nuevo_titulo and nueva_descripcion and nueva_fecha:
+                    consulta = '''UPDATE tareas 
+                                SET titulo=?, descripcion=?, fecha_limite=? 
+                                WHERE titulo=?'''
+                    valores = (nuevo_titulo, nueva_descripcion, nueva_fecha, titulo)
+                elif nuevo_titulo and nueva_descripcion:
+                    consulta = '''UPDATE tareas 
+                                SET titulo=?, descripcion=? 
+                                WHERE titulo=?'''
+                    valores = (nuevo_titulo, nueva_descripcion, titulo)
+                elif nuevo_titulo:
+                    consulta = '''UPDATE tareas 
+                                SET titulo=? 
+                                WHERE titulo=?'''
+                    valores = (nuevo_titulo, titulo)
                 else:
-                    print("Responsable encontrado con ID: ", id_responsable)
+                    print("No se especificaron cambios para actualizar.")
+                    return
+                
+                # Ejecutar la consulta SQL con los valores proporcionados
+                self.cursor_DB.execute(consulta, valores)
+                self.connection.commit()
+                
+                print("Tarea actualizada correctamente.")
+            except sqlite3.IntegrityError:
+                # Captura el error de integridad si se produce un problema con los datos proporcionados
+                print("Error de integridad. Verifica los datos proporcionados.")
+            except sqlite3.DatabaseError as e:
+                # Captura cualquier otro error de base de datos y lo imprime
+                print(f"Error al actualizar la tarea: {e}")
 
-            # Construir la consulta SQL y valores basados en los campos proporcionados
-            if nuevo_titulo and nueva_descripcion and nueva_fecha and id_responsable:
-                consulta = '''UPDATE tareas 
-                            SET titulo=?, descripcion=?, fecha_limite=?, responsable_id=? 
-                            WHERE titulo=?'''
-                valores = (nuevo_titulo, nueva_descripcion, nueva_fecha, id_responsable, titulo)
-            elif nuevo_titulo and nueva_descripcion and nueva_fecha:
-                consulta = '''UPDATE tareas 
-                            SET titulo=?, descripcion=?, fecha_limite=? 
-                            WHERE titulo=?'''
-                valores = (nuevo_titulo, nueva_descripcion, nueva_fecha, titulo)
-            elif nuevo_titulo and nueva_descripcion:
-                consulta = '''UPDATE tareas 
-                            SET titulo=?, descripcion=? 
-                            WHERE titulo=?'''
-                valores = (nuevo_titulo, nueva_descripcion, titulo)
-            elif nuevo_titulo:
-                consulta = '''UPDATE tareas 
-                            SET titulo=? 
-                            WHERE titulo=?'''
-                valores = (nuevo_titulo, titulo)
-            else:
-                print("No se especificaron cambios para actualizar.")
-                return
-            
-            # Ejecutar la consulta SQL con los valores proporcionados
-            self.cursor_DB.execute(consulta, valores)
-            self.connection.commit()
-            
-            print("Tarea actualizada correctamente.")
-        except sqlite3.IntegrityError:
-            # Captura el error de integridad si se produce un problema con los datos proporcionados
-            print("Error de integridad. Verifica los datos proporcionados.")
-        except sqlite3.DatabaseError as e:
-            # Captura cualquier otro error de base de datos y lo imprime
-            print(f"Error al actualizar la tarea: {e}")
+        else:
+            print("Tarea no encontrada")
 
     def Tarea_Usuario(self, correo_electronico):
         try:
@@ -249,13 +268,58 @@ class DatabaseManager:
             print(f"Error al obtener las tareas del usuario: {e}")
 
     def eliminar_tarea(self, titulo):
-        try:
-            # Eliminar la tarea con el título especificado
-            self.cursor_DB.execute('''DELETE FROM tareas WHERE titulo=?'''),titulo
-            self.connection.commit()
-            print("Tarea eliminada correctamente.")
-        except sqlite3.DatabaseError as e:
-            print(f"Error al eliminar la tarea: {e}")
+        validacion=self.validar_tarea(titulo)
+        if validacion:
+            try:
+                validacion=self.validar_tarea(titulo)
+                if validacion:
+                    # Eliminar la tarea con el título especificado
+                    self.cursor_DB.execute('''DELETE FROM tareas WHERE titulo=?''' ,(titulo,))
+                    self.connection.commit()
+                    print("Tarea eliminada correctamente.")
+            except sqlite3.DatabaseError as e:
+                print(f"Error al eliminar la tarea: {e}")
+
+        else:
+            print("No se encontró la tarea a eliminar")
+
+    def Terminar_tarea(self,titulo):
+        validacion=self.validar_tarea(titulo)
+        if validacion:
+            try:
+                # Actualizar el estado de la tarea a "Terminada"
+                self.cursor_DB.execute('''UPDATE tareas SET estado=? WHERE titulo=?''', ("Terminada", titulo,))
+                self.connection.commit()
+                print("Tarea terminada exitosamente")
+            except sqlite3.DatabaseError as e:
+                print(f"Error al terminar la tarea: {e}")
+
+    def notificacion_cambio_tarea(self, titulo):
+        validacion=self.validar_tarea(titulo)
+        if validacion:
+            try:
+                self.cursor_DB.execute('''SELECT descripcion,fecha_limite,estado, responsable_id FROM tareas WHERE titulo=?''', (titulo,))
+                tarea = self.cursor_DB.fetchone()
+                if tarea:
+                    descripcion = tarea[0]
+                    fecha_limite = tarea[1]
+                    estado = tarea[2]
+                    responsable_id = tarea[3]
+               
+                    self.cursor_DB.execute('''SELECT correo_electronico FROM USERS WHERE id=? ''', (responsable_id,))
+                    correo = self.cursor_DB.fetchone()
+                    if correo:
+                        correo_electronico=correo[0]
+                        return titulo, descripcion,fecha_limite,estado,correo_electronico
+                    else:
+                        print("No se encontró el correo del responsable.")
+                else:
+                    print("No se encontró la tarea.")
+        
+            except sqlite3.DatabaseError as e:
+                print(f"Error al obtener la tarea: {e}")
+        else:
+            print("No se encontró la tarea.")
 
     def close(self):
         # Cierra la conexión a la base de datos

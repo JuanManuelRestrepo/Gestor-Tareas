@@ -27,7 +27,7 @@ def main():
                         Gestor_app1.Eliminar_usuario(usuario_eliminar)
 
                     elif subopcion==3:
-                        usuario_actualizar=input("Digite la identificacion del usuario a actualizar: ")
+                        usuario_actualizar=input("Digite el correo del usuario a actualizar: ")
                         Gestor_app1.Actualizar_usuario(usuario_actualizar)
 
                     elif subopcion==4:
@@ -58,12 +58,15 @@ def main():
                         # Actualizar Tarea
                         titulo_tarea = input("Digite el título de la tarea a actualizar: ")
                         Gestor_app1.Actualizar_tarea(titulo_tarea)
+                        
 
                     elif subopcion == 4:
                         # Listar Tareas
                         Gestor_app1.listar_tareas()  # Asegúrate de tener un método listar_tareas en la clase Gestor_app
                     elif subopcion==5:
-                        Gestor_app1.Terminar_tarea (titulo_tarea)
+                        # Terminar Tarea
+                        titulo_tarea = input("Digite el título de la tarea a terminar: ")
+                        Gestor_app1.Terminar_tarea(titulo_tarea)
 
                     elif subopcion ==6:
                         correo_responsable=input("Digite el correo del usuario")
