@@ -1,6 +1,6 @@
 from Correo import *
 from abc import ABC, abstractclassmethod
-from gestor import *
+from gestor_tareas import *
 from tareas import *
 from BasesdeDatos import *
 

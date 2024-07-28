@@ -1,5 +1,7 @@
 import sqlite3
 from datetime import datetime
+import bcrypt
+import base64
 class DatabaseManager:
     def __init__(self, db_name='gestor.db'):
         # Conecta a la base de datos especificada por `db_name`.
@@ -33,15 +35,19 @@ class DatabaseManager:
                                 FOREIGN KEY (responsable_id) REFERENCES USERS (id)
                               )''')
         
+                
         # Guarda los cambios realizados en la base de datos.
         # Esto asegura que las tablas se creen y cualquier otro cambio se persista.
         self.connection.commit()
-    
-    def agregar_usuario(self, nombre, identificacion, correo_electronico):
+
+    def Crear_usuario(self, nombre, identificacion, correo_electronico, contraseña):
+        # Hashear la contraseña y luego codificarla en base64
+        contraseña_hashed = bcrypt.hashpw(contraseña.encode('utf-8'), bcrypt.gensalt())
+        contraseña_encriptada_base64 = base64.b64encode(contraseña_hashed).decode('utf-8')
         try:
             # Inserte los datos en las columnas
-            self.cursor_DB.execute('''INSERT INTO USERS (nombre, identificacion, correo_electronico)
-                                VALUES (?, ?, ?)''', (nombre, identificacion, correo_electronico))
+            self.cursor_DB.execute('''INSERT INTO USERS (nombre, identificacion, correo_electronico, contraseña)
+                                VALUES (?, ?, ?,?)''', (nombre, identificacion, correo_electronico,contraseña_encriptada_base64))
             # Los valores a insertar en la base de datos se pasan como una tupla (nombre, identificacion, correo_electronico)
             
             self.connection.commit()  # Hace un commit de todas las operaciones que se han hecho a la base de datos a través de esa conexión
@@ -59,7 +65,29 @@ class DatabaseManager:
         except sqlite3.DatabaseError as e:
             print(f"Error al verificar el usuario: {e}")
             return False
+        
+    def validar_credenciales(self, correo_electronico, contraseña):
+        try:
+            self.cursor_DB.execute('''SELECT contraseña FROM USERS WHERE correo_electronico=?''', (correo_electronico,))
+            resultado = self.cursor_DB.fetchone()  # devuelve None si no hay resultados
+            if resultado:
+                # valor de la contraseña encriptada
+                contraseña_encriptada_base64 = resultado[0]
+                # Decoficar la contraseña almacenada de base 64 a bytes
+                contraseña_hashed = base64.b64decode(contraseña_encriptada_base64)
+                # verificamos si la contraseña ingresada es correcta
+                if bcrypt.checkpw(contraseña.encode('utf-8'), contraseña_hashed):
+                    return True
+                else:
+                    return False
+            else:
+                print("Acceso Denegado, credenciales invalidas")
+                return False
+        except sqlite3.DatabaseError as e:
+            print(f"Error al verificar las credenciales: {e}")
+            return False
 
+        
     def Validar_correo_existente(self, correo_electronico):
         try:
             # Ejecutar la consulta SQL para buscar el correo electrónico
