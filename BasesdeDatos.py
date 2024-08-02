@@ -86,7 +86,6 @@ class DatabaseManager:
         except sqlite3.DatabaseError as e:
             print(f"Error al verificar las credenciales: {e}")
             return False
-
         
     def Validar_correo_existente(self, correo_electronico):
         try:
@@ -178,6 +177,14 @@ class DatabaseManager:
             return resultado[0]  # Devuelve el ID
         return None
     
+    def obtener_correo_id(self, id):
+        self.cursor_DB.execute('''SELECT correo_electronico FROM USERS WHERE id=?''', (id,))
+        resultado = self.cursor_DB.fetchone()
+        if resultado:
+            return resultado[0]
+        else:
+            return None
+    
     def agregar_tarea(self, titulo, descripcion, fecha_limite, estado, responsable_correo):
         try:
             # Obtener el ID del responsable basándose en el correo electrónico proporcionado
@@ -204,7 +211,7 @@ class DatabaseManager:
 
     def listar_tareas(self):
         # Ejecuta una consulta para seleccionar todas las tareas
-        self.cursor_DB.execute('''SELECT titulo, descripcion, fecha_limite, estado FROM tareas''')
+        self.cursor_DB.execute('''SELECT titulo, descripcion, fecha_limite, estado, responsable_id FROM tareas''')
         
         # Recupera todas las filas del resultado de la consulta
         tareas = self.cursor_DB.fetchall()
@@ -218,11 +225,28 @@ class DatabaseManager:
                 print(f"Descripción: {tarea[1]}")
                 print(f"Fecha límite: {fecha_limite_str}")
                 print(f"Estado: {tarea[3]}")
+                correo=self.obtener_correo_id(tarea[4])
+                print(f"Responsable: {correo}")
                 print("-" * 30)
             except ValueError as e:
                 # Manejo de errores si el formato de fecha es incorrecto
                 print(f"Error al convertir la fecha: {e}")
                 print(f"Tarea con fecha inválida: {tarea}")
+    
+    def nombre_id(self, titulo):
+        try:
+            self.cursor_DB.execute('''SELECT * FROM tareas WHERE titulo=?''',(titulo,))
+            Datos=self.cursor_DB.fetchall()
+            id=Datos[0]
+            titulo= Datos[1]
+            descripcion=Datos[2]
+            fecha_limite=Datos[3]
+            estado=Datos[4]
+            id_respon=Datos[5]
+            return id, titulo, descripcion, fecha_limite, estado, id_respon
+        except sqlite3.DatabaseError as e:
+            print(f"Error al obtener el id de la tarea: {e}")
+            print("Tarea no encontrada")
 
     def Actualizar_tarea(self, titulo, nuevo_titulo=None, nueva_descripcion=None, nueva_fecha=None, correo_responsable=None):
         tarea_validar=self.validar_tarea(titulo)
@@ -349,9 +373,54 @@ class DatabaseManager:
         else:
             print("No se encontró la tarea.")
 
+    def notificar_tarea_terminada(self,titulo):
+        validacion=self.validar_tarea(titulo)
+        if validacion:
+            try:
+                self.cursor_DB.execute('''SELECT descripcion, responsable_id FROM tareas WHERE titulo=?''', (titulo,))
+                tarea = self.cursor_DB.fetchone()
+                if tarea:
+                    descripcion = tarea[0]
+                    responsable_id = tarea[1]
+               
+                    self.cursor_DB.execute('''SELECT correo_electronico FROM USERS WHERE id=? ''', (responsable_id,))
+                    correo = self.cursor_DB.fetchone()
+                    if correo:
+                        correo_electronico=correo[0]
+                        return titulo, descripcion,correo_electronico
+                    else:
+                        print("No se encontró el correo del responsable.")
+                else:
+                    print("No se encontró la tarea.")
+        
+            except sqlite3.DatabaseError as e:
+                print(f"Error al obtener la tarea: {e}")
+        else:
+            print("No se encontró la tarea.")
+
+
+                                    
+
+    def Encriptar_base64(self,contraseña):
+        # Hashear la contraseña y luego codificarla en base64
+        contraseña_hashed = bcrypt.hashpw(contraseña.encode('utf-8'), bcrypt.gensalt())
+        contraseña_encriptada_base64 = base64.b64encode(contraseña_hashed).decode('utf-8')
+        return contraseña_encriptada_base64
+    
+    def cambio_de_contraseña(self, correo, Nueva_contraseña):
+        try:
+            contraseña_encriptada=self.Encriptar_base64(Nueva_contraseña)
+            self.cursor_DB.execute('''UPDATE USERS SET contraseña=? where correo_electronico=?''', (contraseña_encriptada,correo))
+            self.connection.commit()
+            print("Contraseña Actualizada")
+        except sqlite3.DatabaseError as e:
+            print(f"Error en base de datos: {e}")
+
     def close(self):
         # Cierra la conexión a la base de datos
         self.connection.close()
+
+    
 
         
 

@@ -1,8 +1,6 @@
-from Menu import *
 from datetime import datetime
 
 class Tarea():
-
     #Metodo constructopr, con sus atributos
     def __init__(self, titulo, descripcion, fecha_limite, responsable_correo):
         try:

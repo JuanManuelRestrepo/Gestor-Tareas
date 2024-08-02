@@ -68,7 +68,7 @@ class Gestor_Tareas(Gestor_usuarios_Base):
        self.DB.listar_tareas()
 
     def Tarea_usuario(self, correo_responsable):
-        validacion_correo=self.DB.Validar_correo_existente()
+        validacion_correo=self.DB.Validar_correo_existente(correo_responsable)
 
         if validacion_correo:
             self.DB.Tarea_Usuario(correo_responsable)
@@ -78,6 +78,7 @@ class Gestor_Tareas(Gestor_usuarios_Base):
     
     def Terminar_tarea(self, titulo):
         self.DB.Terminar_tarea(titulo)
+        self.notificacidor.notificar_Tarea_Terminada(titulo)
         
 
 
