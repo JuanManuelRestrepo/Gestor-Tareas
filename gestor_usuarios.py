@@ -38,10 +38,10 @@ class Gestor_usuarios(Gestor_base):
             else:
                 print("Usuario no encontrado")
 
-        def cambio_de_contraseña(self,correo, contraseña_nueva):
-                if self.DB.Validar_correo_existente(correo):
-                    self.DB.cambio_de_contraseña(correo,contraseña_nueva)
+        def cambio_de_contraseña(self,correo, contraseñaVieja,contraseña_nueva):
+                if self.DB.validar_credenciales(correo, contraseñaVieja):
+                    self.DB.cambio_de_contraseña(correo, contraseña_nueva)
                 else:
-                    print("correo inexistente")
+                    print("Credenciales invalidas, No fue posible cambiar la contraseña")
     
             

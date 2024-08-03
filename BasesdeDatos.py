@@ -397,9 +397,7 @@ class DatabaseManager:
                 print(f"Error al obtener la tarea: {e}")
         else:
             print("No se encontró la tarea.")
-
-
-                                    
+            
 
     def Encriptar_base64(self,contraseña):
         # Hashear la contraseña y luego codificarla en base64
@@ -415,6 +413,16 @@ class DatabaseManager:
             print("Contraseña Actualizada")
         except sqlite3.DatabaseError as e:
             print(f"Error en base de datos: {e}")
+
+    def Validar_Contraseña(self,correo,contraseña_comprobar):
+        contraseña_encrip=self.Encriptar_base64(contraseña_comprobar)
+        self.cursor_DB.execute(''' SELECT contraseña FROM USERS WHERE correoo_electronico=?''', (correo, contraseña_comprobar,))
+        contraseña_encrip_db=self.cursor_DB.fetchone()
+        if contraseña_encrip_db:
+            if contraseña_encrip==contraseña_encrip_db:
+                return True
+            else:
+                return False
 
     def close(self):
         # Cierra la conexión a la base de datos

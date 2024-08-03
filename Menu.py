@@ -112,11 +112,13 @@ def Menu_configuraciones():
                 correo = input("Digite el correo del usuario: ")
                 contraseña = input("Digite la contraseña actual: ")
                 nueva_contraseña = input("Digite la nueva contraseña: ")
-                comprobar_contraseña= input("Digite la contraseña de nuevo")
-                if comprobar_contraseña == contraseña:
+                if nueva_contraseña == contraseña:
                     print("Contraseña igual a la anterior")
+                comprobar_contraseña= input("Digite la contraseña de nuevo")
+                if nueva_contraseña != comprobar_contraseña:
+                    print("No coinciden")
                 else:
-                    Gestor_usuario.cambio_de_contraseña(correo, nueva_contraseña)
+                    Gestor_usuario.cambio_de_contraseña(correo, contraseña,nueva_contraseña)
             elif subopcion==2:
                 break
 

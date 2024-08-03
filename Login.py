@@ -13,8 +13,7 @@ class Login_abstact(ABC):
         pass
 
 class Login(Login_abstact):
-
-    def validar_credenciales(self, correo_electronico, contraseña):
+    def validar_credenciales(self, correo_electronico, contraseña):        
         if self.DB.validar_credenciales(correo_electronico, contraseña):
             print("Credenciales correctas")
             return True
